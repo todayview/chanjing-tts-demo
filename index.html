@@ -805,7 +805,6 @@
         async function createVoiceClone() {
             const audioFile = document.getElementById('audioFile').files[0];
             const voiceName = document.getElementById('voiceName').value.trim();
-            const previewText = document.getElementById('previewText').value.trim();
 
             if (!audioFile) {
                 showMessage('cloneResult', '请选择音频文件', 'error');
@@ -861,7 +860,7 @@
                     body: JSON.stringify({
                         name: voiceName,
                         url: fileUrl,
-                        text: previewText,
+                        text: '',
                         model_type: 'cicada3.0',
                         language: 'cn'
                     })
