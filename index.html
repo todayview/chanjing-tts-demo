@@ -492,6 +492,16 @@
                 <label for="voiceName">声音名称</label>
                 <input type="text" id="voiceName" placeholder="请输入声音名称">
             </div>
+            <!-- 模型选择 -->
+            <div class="form-group">
+                <label for="modelType">选择模型</label>
+                <select id="modelType">
+                    <option value="Cicada-1.0">Cicada-1.0</option>
+                    <option value="Cicada-2.0">Cicada-2.0</option>
+                    <option value="Cicada-3.0" selected>Cicada-3.0</option>
+                    <option value="Cicada-3.0-turbo">Cicada-3.0-turbo</option>
+                </select>
+            </div>
             <button class="btn" onclick="createVoiceClone()" id="cloneBtn" disabled>开始克隆</button>
             <div id="cloneResult"></div>
         </div>
@@ -805,27 +815,29 @@
         async function createVoiceClone() {
             const audioFile = document.getElementById('audioFile').files[0];
             const voiceName = document.getElementById('voiceName').value.trim();
-
+            const selectedModelLabel = (document.getElementById('modelType')?.value || 'Cicada-3.0').trim();
+            // 将展示名称转换为 API 需要的 model_type（cicadaX.Y 或 cicadaX.Y-turbo）
+            const model_type = selectedModelLabel.toLowerCase().replace(/^cicada-/, 'cicada');
             if (!audioFile) {
                 showMessage('cloneResult', '请选择音频文件', 'error');
                 return;
             }
-
+        
             if (!voiceName) {
                 showMessage('cloneResult', '请输入声音名称', 'error');
                 return;
             }
-
+        
             if (!accessToken) {
                 showMessage('cloneResult', '请先获取Access Token', 'error');
                 return;
             }
-
+        
             if (!userToken) {
                 showMessage('cloneResult', '请先登录平台账号', 'error');
                 return;
             }
-
+        
             // 验证文件格式
             const validTypes = ['audio/mpeg', 'audio/wav', 'audio/x-wav', 'audio/m4a'];
             const ext = (audioFile.name.split('.').pop() || '').toLowerCase();
@@ -834,13 +846,13 @@
                 showMessage('cloneResult', '不支持的音频格式，请选择MP3、WAV或M4A文件', 'error');
                 return;
             }
-
+        
             // 验证文件大小
             if (audioFile.size > 100 * 1024 * 1024) {
                 showMessage('cloneResult', '文件大小不能超过100MB', 'error');
                 return;
             }
-
+        
             try {
                 // 使用平台上传接口上传文件
                 showMessage('cloneResult', '正在上传音频文件到平台...', 'info');
@@ -861,11 +873,11 @@
                         name: voiceName,
                         url: fileUrl,
                         text: '',
-                        model_type: 'cicada3.0',
+                        model_type: model_type,
                         language: 'cn'
                     })
                 });
-
+        
                 const data = await response.json();
                 
                 if (data.code === 0) {
