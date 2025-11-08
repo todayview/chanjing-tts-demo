@@ -1,0 +1,1377 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>蝉镜API声音克隆测试</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .section {
+            background: #fff;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e0e0e0;
+        }
+
+        .section-title {
+            font-size: 1.4rem;
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 2px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+        }
+
+        .file-upload {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-upload input[type="file"] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-upload-label {
+            display: block;
+            padding: 20px;
+            border: 2px dashed #667eea;
+            border-radius: 10px;
+            text-align: center;
+            color: #667eea;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .file-upload-label:hover {
+            background: rgba(102, 126, 234, 0.05);
+            border-color: #764ba2;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .voice-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .voice-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        /* 登录模态框样式 */
+        .login-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .login-modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-header h2 {
+            color: #333;
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        .login-header p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .captcha-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .captcha-input {
+            flex: 1;
+        }
+
+        .captcha-image {
+            height: 40px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 2px solid #e0e0e0;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 15px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .logout-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            margin-left: auto;
+        }
+
+        .login-required {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .login-required h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .voice-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .voice-card.selected {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .voice-card h4 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .voice-card p {
+            color: #666;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-top: 10px;
+        }
+
+        .status-processing {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-completed {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-failed {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .audio-player {
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .task-list {
+            margin-top: 20px;
+        }
+
+        .task-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .task-item h5 {
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .task-item p {
+            color: #666;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border: 1px solid #f5c6cb;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border: 1px solid #c3e6cb;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .row {
+                grid-template-columns: 1fr;
+            }
+            
+            .voice-list {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>蝉镜API声音克隆测试</h1>
+            <p>测试声音克隆和语音合成功能</p>
+        </div>
+
+        <!-- 密钥配置 -->
+        <div class="section">
+             <!-- 
+            <h3 class="section-title">密钥配置</h3>
+            <div class="row">
+                <div class="form-group">
+                    <label for="appId">App ID</label>
+                    <input type="text" id="appId" value="da032a56" placeholder="请输入App ID">
+                </div>
+                <div class="form-group">
+                    <label for="secretKey">Secret Key</label>
+                    <input type="password" id="secretKey" value="4a69c35c5210481d890faea4b0cf0177" placeholder="请输入Secret Key">
+                </div>
+            </div>
+            -->
+            <button class="btn" onclick="getAccessToken()" id="getTokenBtn" >获取Access Token</button>
+            <div id="tokenResult"></div>
+        </div>
+
+        <!-- 声音克隆 -->
+        <div class="section">
+            <h3 class="section-title">声音克隆</h3>
+            <div class="form-group">
+                <label>上传音频文件</label>
+                <div class="file-upload">
+                    <input type="file" id="audioFile" accept=".mp3,.wav,.m4a" onchange="handleFileSelect(event)">
+                    <label for="audioFile" class="file-upload-label">
+                        <div>📁 点击选择音频文件</div>
+                        <small>支持 MP3、WAV、M4A 格式，文件大小不超过100MB</small>
+                    </label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="voiceName">声音名称</label>
+                <input type="text" id="voiceName" placeholder="请输入声音名称">
+            </div>
+            <button class="btn" onclick="createVoiceClone()" id="cloneBtn" disabled>开始克隆</button>
+            <div id="cloneResult"></div>
+        </div>
+
+        <!-- 克隆声音列表 -->
+        <div class="section">
+            <h3 class="section-title">我的克隆声音</h3>
+            <button class="btn btn-secondary" onclick="getVoiceList()">刷新列表</button>
+            <div id="voiceList" class="voice-list"></div>
+        </div>
+
+        <!-- 语音合成 -->
+        <div class="section">
+            <h3 class="section-title">语音合成</h3>
+            <div class="form-group">
+                <label for="selectedVoice">选择声音</label>
+                <select id="selectedVoice">
+                    <option value="">请先选择克隆声音</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="synthesisText">合成文本</label>
+                <textarea id="synthesisText" rows="4" placeholder="请输入要合成的文本，不超过4000字"></textarea>
+            </div>
+            <div class="row">
+                <div class="form-group">
+                    <label for="speed">语速 (0.5-2.0)</label>
+                    <input type="range" id="speed" min="0.5" max="2.0" step="0.1" value="1.0">
+                    <small>当前值: <span id="speedValue">1.0</span></small>
+                </div>
+                <div class="form-group">
+                    <label for="pitch">语调 (0.1-3.0)</label>
+                    <input type="range" id="pitch" min="0.1" max="3.0" step="0.1" value="1.0">
+                    <small>当前值: <span id="pitchValue">1.0</span></small>
+                </div>
+            </div>
+            <button class="btn btn-success" onclick="createSpeechTask()" id="synthesisBtn" disabled>开始合成</button>
+            <div id="synthesisResult"></div>
+        </div>
+
+        <!-- 合成任务列表 -->
+        <div class="section">
+            <h3 class="section-title">合成任务列表</h3>
+            <div id="taskList" class="task-list"></div>
+        </div>
+    </div>
+
+    <script>
+        let accessToken = '';
+        let currentVoiceId = '';
+        let voiceTasks = new Map();
+        let synthesisTasks = new Map();
+        let audioManCache = new Map();
+
+        // 登录相关变量
+        let userToken = null; // 用户平台token
+        let currentUsername = ''; // 当前用户名
+        
+        // 显示登录模态框
+        function showLoginModal() {
+            document.getElementById('loginModal').classList.add('show');
+            getCaptcha(); // 自动获取验证码
+        }
+        
+        // 隐藏登录模态框
+        function hideLoginModal() {
+            document.getElementById('loginModal').classList.remove('show');
+        }
+        
+        // 获取验证码
+        async function getCaptcha() {
+            try {
+                const response = await fetch('https://www.zgmz1618.com/api/captchaImage', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                console.log(data)
+                if (data.code == 200) {
+                    // 显示验证码图片
+                    document.getElementById('captchaImage').src = 'data:image/gif;base64,' + data.img;
+                    // 保存UUID用于登录验证
+                    document.getElementById('captchaImage').setAttribute('data-uuid', data.uuid);
+                } else {
+                    console.error('获取验证码失败:', data.msg);
+                }
+            } catch (error) {
+                console.error('获取验证码失败:', error.message);
+            }
+        }
+        
+        // 处理登录
+        async function handleLogin(event) {
+            event.preventDefault();
+            
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const captcha = document.getElementById('captcha').value.trim();
+            const rememberMe = document.getElementById('rememberMe').checked;
+            const uuid = document.getElementById('captchaImage').getAttribute('data-uuid');
+            
+            if (!username || !password || !captcha) {
+                alert('请填写完整的登录信息');
+                return;
+            }
+            
+            try {
+                const response = await fetch('https://www.zgmz1618.com/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password,
+                        code: captcha,
+                        uuid: uuid
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.code == 200) {
+                    // 登录成功
+                    userToken = data.token;
+                    currentUsername = username;
+                    
+                    // 保存登录状态
+                    if (rememberMe) {
+                        localStorage.setItem('username', username);
+                        localStorage.setItem('rememberMe', 'true');
+                    } else {
+                        localStorage.removeItem('username');
+                        localStorage.removeItem('rememberMe');
+                    }
+                    sessionStorage.setItem('userToken', userToken);
+                    sessionStorage.setItem('currentUsername', currentUsername);
+                    
+                    // 更新UI
+                    updateLoginUI();
+                    hideLoginModal();
+                    
+                    alert('登录成功！');
+                } else {
+                    alert('登录失败: ' + data.msg);
+                    // 刷新验证码
+                    getCaptcha();
+                }
+            } catch (error) {
+                alert('登录失败: ' + error.message);
+                // 刷新验证码
+                getCaptcha();
+            }
+        }
+        
+        // 退出登录
+        function logout() {
+            userToken = null;
+            currentUsername = '';
+            sessionStorage.removeItem('userToken');
+            sessionStorage.removeItem('currentUsername');
+            
+            updateLoginUI();
+            alert('已退出登录');
+        }
+        
+        // 检查登录状态
+        function checkLoginStatus() {
+            const token = sessionStorage.getItem('userToken');
+            const username = sessionStorage.getItem('currentUsername');
+            
+            if (token && username) {
+                userToken = token;
+                currentUsername = username;
+                updateLoginUI();
+            } else {
+                // 检查本地存储的记住我
+                const rememberMe = localStorage.getItem('rememberMe') === 'true';
+                const savedUsername = localStorage.getItem('username');
+                
+                if (rememberMe && savedUsername) {
+                    document.getElementById('username').value = savedUsername;
+                    document.getElementById('rememberMe').checked = true;
+                }
+                
+                // 显示登录提示
+                showLoginRequired();
+            }
+        }
+        
+        // 更新登录UI
+        function updateLoginUI() {
+            if (userToken && currentUsername) {
+                // 已登录状态
+                document.getElementById('userInfo').style.display = 'flex';
+                document.getElementById('usernameDisplay').textContent = currentUsername;
+                document.getElementById('userAvatar').textContent = currentUsername.charAt(0).toUpperCase();
+                document.getElementById('loginRequired').style.display = 'none';
+                document.querySelector('.container').style.display = 'block';
+                
+                // 启用功能按钮
+                document.getElementById('cloneBtn').disabled = false;
+                document.getElementById('synthesisBtn').disabled = false;
+                document.getElementById('getTokenBtn').disabled = false;
+            } else {
+                // 未登录状态
+                document.getElementById('userInfo').style.display = 'none';
+                showLoginRequired();
+                
+                // 禁用功能按钮
+                document.getElementById('cloneBtn').disabled = true;
+                document.getElementById('synthesisBtn').disabled = true;
+                document.getElementById('getTokenBtn').disabled = true;
+            }
+        }
+        
+        // 显示登录提示
+        function showLoginRequired() {
+            document.getElementById('loginRequired').style.display = 'block';
+            document.querySelector('.container').style.display = 'none';
+        }
+        
+        // 隐藏登录提示
+        function hideLoginRequired() {
+            document.getElementById('loginRequired').style.display = 'none';
+            document.querySelector('.container').style.display = 'block';
+        }
+        
+        // 使用平台上传接口上传文件
+        async function uploadToPlatform(file) {
+            if (!userToken) {
+                throw new Error('请先登录');
+            }
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('type', 'audio'); // 音频文件类型
+            
+            try {
+                const response = await fetch('https://www.zgmz1618.com/api/businessResources/upload', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + userToken
+                    },
+                    body: formData
+                });
+                
+                const data = await response.json();
+                if (data.code == 200) {
+                    return {
+                        url: data.data.resourceUrl,
+                        is_public: true
+                    };
+                } else {
+                    throw new Error(data.msg || '上传失败');
+                }
+            } catch (error) {
+                throw new Error('平台上传失败: ' + error.message);
+            }
+        }
+
+        // 获取Access Token
+        async function getAccessToken() {
+         
+
+            try {
+                const response = await fetch('/proxy/access_token', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json; charset=utf-8'
+                    },
+                    body: JSON.stringify({
+                        app_id: 'da032a56',
+                        secret_key: '4a69c35c5210481d890faea4b0cf0177'
+                    })
+                });
+
+                const data = await response.json();
+                console.log(data)
+                if (data.code === 0) {
+                    accessToken = data.data.access_token;
+                    showMessage('tokenResult', 'Access Token获取成功！', 'success');
+                                     // 自动刷新克隆声音列表
+                    getVoiceList();
+                    document.getElementById('cloneBtn').disabled = false;
+                    document.getElementById('synthesisBtn').disabled = false;
+                } else {
+                    showMessage('tokenResult', `获取失败: ${data.msg}`, 'error');
+                }
+            } catch (error) {
+                showMessage('tokenResult', `请求失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 处理文件选择
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const fileName = file.name;
+                const fileSize = (file.size / 1024 / 1024).toFixed(2);
+                document.querySelector('.file-upload-label').innerHTML = `
+                    <div>📁 ${fileName}</div>
+                    <small>文件大小: ${fileSize}MB</small>
+                `;
+            }
+        }
+
+        // 创建声音克隆任务
+        async function createVoiceClone() {
+            const audioFile = document.getElementById('audioFile').files[0];
+            const voiceName = document.getElementById('voiceName').value.trim();
+            const previewText = document.getElementById('previewText').value.trim();
+
+            if (!audioFile) {
+                showMessage('cloneResult', '请选择音频文件', 'error');
+                return;
+            }
+
+            if (!voiceName) {
+                showMessage('cloneResult', '请输入声音名称', 'error');
+                return;
+            }
+
+            if (!accessToken) {
+                showMessage('cloneResult', '请先获取Access Token', 'error');
+                return;
+            }
+
+            if (!userToken) {
+                showMessage('cloneResult', '请先登录平台账号', 'error');
+                return;
+            }
+
+            // 验证文件格式
+            const validTypes = ['audio/mpeg', 'audio/wav', 'audio/x-wav', 'audio/m4a'];
+            const ext = (audioFile.name.split('.').pop() || '').toLowerCase();
+            const validExts = ['mp3', 'wav', 'm4a'];
+            if (!validTypes.includes(audioFile.type) && !validExts.includes(ext)) {
+                showMessage('cloneResult', '不支持的音频格式，请选择MP3、WAV或M4A文件', 'error');
+                return;
+            }
+
+            // 验证文件大小
+            if (audioFile.size > 100 * 1024 * 1024) {
+                showMessage('cloneResult', '文件大小不能超过100MB', 'error');
+                return;
+            }
+
+            try {
+                // 使用平台上传接口上传文件
+                showMessage('cloneResult', '正在上传音频文件到平台...', 'info');
+                const uploadResult = await uploadToPlatform(audioFile);
+                console.log('[DEBUG] 平台上传成功:', uploadResult);
+                
+                const fileUrl = uploadResult.url;
+                showMessage('cloneResult', '文件上传成功，正在创建声音克隆任务...', 'info');
+                
+                // 创建声音克隆任务（使用平台上传得到的URL）
+                const response = await fetch('/proxy/create_customised_audio', {
+                    method: 'POST',
+                    headers: {
+                        'access_token': accessToken,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: voiceName,
+                        url: fileUrl,
+                        text: previewText,
+                        model_type: 'cicada3.0',
+                        language: 'cn'
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.code === 0) {
+                    currentVoiceId = data.data;
+                    showMessage('cloneResult', `克隆任务创建成功！任务ID: ${currentVoiceId}`, 'success');
+                    
+                    // 开始轮询查询进度
+                    pollVoiceCloneProgress(currentVoiceId);
+                } else {
+                    showMessage('cloneResult', `创建失败: ${data.msg}`, 'error');
+                }
+            } catch (error) {
+                showMessage('cloneResult', `请求失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 轮询声音克隆进度
+        async function pollVoiceCloneProgress(voiceId) {
+            const maxAttempts = 60; // 最多轮询60次（约5分钟）
+            let attempts = 0;
+            
+            const poll = async () => {
+                try {
+                    const response = await fetch(`/proxy/customised_audio?id=${voiceId}`, {
+                        method: 'GET',
+                        headers: {
+                            'access_token': accessToken
+                        }
+                    });
+
+                    const data = await response.json();
+                    
+                    if (data.code === 0) {
+                        const voiceData = data.data;
+                        const progress = voiceData.progress;
+                        const status = voiceData.status;
+                        
+                        let statusText = '';
+                        let statusClass = '';
+                        
+                        switch (status) {
+                            case 1:
+                                statusText = '制作中';
+                                statusClass = 'status-processing';
+                                break;
+                            case 2:
+                                statusText = '已完成';
+                                statusClass = 'status-completed';
+                                break;
+                            case 3:
+                                statusText = '已过期';
+                                statusClass = 'status-failed';
+                                break;
+                            case 4:
+                                statusText = '制作失败';
+                                statusClass = 'status-failed';
+                                break;
+                            default:
+                                statusText = '未知状态';
+                                statusClass = 'status-failed';
+                        }
+                        
+                        showMessage('cloneResult', `
+                            <div>克隆进度: ${progress}%</div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${progress}%"></div>
+                            </div>
+                            <div class="status-badge ${statusClass}">${statusText}</div>
+                            ${voiceData.err_msg ? `<div style="color: #dc3545; margin-top: 10px;">${voiceData.err_msg}</div>` : ''}
+                        `, status === 2 ? 'success' : 'error');
+                        
+                        if (status === 2 || status === 3 || status === 4 || attempts >= maxAttempts) {
+                            // 停止轮询
+                            if (status === 2) {
+                                // 成功后刷新声音列表
+                                getVoiceList();
+                            }
+                            return;
+                        }
+                        
+                        // 继续轮询
+                        attempts++;
+                        setTimeout(poll, 5000); // 5秒轮询一次
+                    } else {
+                        showMessage('cloneResult', `查询失败: ${data.msg}`, 'error');
+                    }
+                } catch (error) {
+                    showMessage('cloneResult', `查询失败: ${error.message}`, 'error');
+                }
+            };
+            
+            poll();
+        }
+
+        // 获取声音列表
+        async function getVoiceList() {
+            if (!accessToken) {
+                showMessage('voiceList', '请先获取Access Token', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/proxy/list_customised_audio', {
+                    method: 'POST',
+                    headers: {
+                        'access_token': accessToken,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        page: 1,
+                        page_size: 20
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.code === 0) {
+                    displayVoiceList(data.data.list);
+                } else {
+                    showMessage('voiceList', `获取失败: ${data.msg}`, 'error');
+                }
+            } catch (error) {
+                showMessage('voiceList', `请求失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 显示声音列表
+        function displayVoiceList(voices) {
+            const voiceListEl = document.getElementById('voiceList');
+            const selectedVoiceEl = document.getElementById('selectedVoice');
+            
+            if (!voices || voices.length === 0) {
+                voiceListEl.innerHTML = '<p style="text-align: center; color: #666;">暂无克隆声音</p>';
+                selectedVoiceEl.innerHTML = '<option value="">请先选择克隆声音</option>';
+                return;
+            }
+
+            let voiceListHTML = '';
+            let selectOptions = '<option value="">请选择声音</option>';
+            
+            voices.forEach(voice => {
+                let statusText = '';
+                let statusClass = '';
+                
+                switch (voice.status) {
+                    case 1:
+                        statusText = '制作中';
+                        statusClass = 'status-processing';
+                        break;
+                    case 2:
+                        statusText = '已完成';
+                        statusClass = 'status-completed';
+                        break;
+                    case 3:
+                        statusText = '已过期';
+                        statusClass = 'status-failed';
+                        break;
+                    case 4:
+                        statusText = '制作失败';
+                        statusClass = 'status-failed';
+                        break;
+                    default:
+                        statusText = '未知';
+                        statusClass = 'status-failed';
+                }
+
+                voiceListHTML += `
+                    <div class="voice-card ${voice.status === 2 ? 'selectable' : ''}" 
+                         onclick="${voice.status === 2 ? `selectVoice('${voice.id}', '${voice.name}')` : ''}">
+                        <h4>${voice.name}</h4>
+                      
+                        <p><strong>进度:</strong> ${voice.progress}%</p>
+                        <div class="status-badge ${statusClass}">${statusText}</div>
+                        ${voice.audio_path ? `<audio controls class="audio-player" src="${voice.audio_path}"></audio>` : ''}
+                        ${voice.err_msg ? `<p style="color: #dc3545; margin-top: 10px;">${voice.err_msg}</p>` : ''}
+                    </div>
+                `;
+
+                if (voice.status === 2) {
+                    selectOptions += `<option value="${voice.id}">${voice.name} (${voice.id})</option>`;
+                }
+            });
+
+            voiceListEl.innerHTML = voiceListHTML;
+            selectedVoiceEl.innerHTML = selectOptions;
+        }
+
+        // 选择声音
+        function selectVoice(voiceId, voiceName) {
+            document.getElementById('selectedVoice').value = voiceName;
+            
+            // 更新UI显示
+            document.querySelectorAll('.voice-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            const selectedCard = document.querySelector(`[onclick*="${voiceId}"]`);
+            if (selectedCard) {
+                selectedCard.classList.add('selected');
+            }
+        }
+
+
+        // 创建语音合成任务
+        async function createSpeechTask() {
+            const voiceId = document.getElementById('selectedVoice').value;
+            const text = document.getElementById('synthesisText').value.trim();
+            const speed = parseFloat(document.getElementById('speed').value);
+            const pitch = parseFloat(document.getElementById('pitch').value);
+
+            if (!voiceId) {
+                showMessage('synthesisResult', '请选择克隆声音', 'error');
+                return;
+            }
+
+            if (!text) {
+                showMessage('synthesisResult', '请输入合成文本', 'error');
+                return;
+            }
+
+            if (text.length > 4000) {
+                showMessage('synthesisResult', '文本长度不能超过4000字', 'error');
+                return;
+            }
+
+            if (!accessToken) {
+                showMessage('synthesisResult', '请先获取Access Token', 'error');
+                return;
+            }
+
+            try {
+                showMessage('synthesisResult', '正在获取声音详情...', 'info');
+
+                const body = {
+                    audio_man: voiceId,
+                    speed: speed,
+                    pitch: pitch,
+                    text: {
+                        text: text,
+                        plain_text: text
+                    },
+                    font_size: 64,
+                    width: 1000,
+                    height: 90,
+                    aigc_watermark: false
+                };
+                console.log('[DEBUG] create_audio_task body:', body);
+
+                const response = await fetch('/proxy/create_audio_task', {
+                    method: 'POST',
+                    headers: {
+                        'access_token': accessToken,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(body)
+                });
+
+                const data = await response.json();
+                console.log('[DEBUG] create_audio_task response:', data);
+                if (data.code === 0) {
+                    const taskId = data.data.task_id;
+                    showMessage('synthesisResult', `语音合成任务创建成功！任务ID: ${taskId}`, 'success');
+
+                    synthesisTasks.set(taskId, {
+                        id: taskId,
+                        text: text.substring(0, 50) + (text.length > 50 ? '...' : ''),
+                        status: 'processing',
+                        progress: 0
+                    });
+
+                    updateTaskList();
+                    pollSpeechTaskProgress(taskId);
+                } else {
+                    showMessage('synthesisResult', `创建失败: ${data.msg}`, 'error');
+                }
+            } catch (error) {
+                console.error('[DEBUG] createSpeechTask error:', error);
+                showMessage('synthesisResult', `请求失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 轮询语音合成任务进度
+        async function pollSpeechTaskProgress(taskId) {
+            const maxAttempts = 120; // 最多轮询120次（约10分钟）
+            let attempts = 0;
+            
+            const poll = async () => {
+                try {
+                    console.log('[DEBUG] pollSpeechTaskProgress: querying task', taskId);
+                    const url = `/proxy/audio_task_state`;
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'access_token': accessToken,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ task_id: taskId })
+                    });
+
+                    const data = await response.json();
+                    console.log('[DEBUG] audio_task response:', data);
+                    
+                    if (data.code === 0) {
+                        const taskData = data.data || {};
+                        const status = Number(taskData.status);
+
+                        // 进度（0-100）
+                        const progress = typeof taskData.progress === 'number' ? taskData.progress : undefined;
+
+                        // 音频与时长
+                        const full = taskData.full || taskData.audio || {};
+                        const audioUrl = full.url;
+                        const duration = full.duration || taskData.duration;
+
+                        // 字幕归一化
+                        let subtitles = taskData.subtitles || taskData.caption_files || taskData.captions || null;
+                        if (subtitles && !Array.isArray(subtitles) && typeof subtitles === 'object') {
+                            subtitles = Object.entries(subtitles).map(([fmt, url]) => ({ format: fmt, url }));
+                        }
+
+                        // 错误信息归一化
+                        const errorMsg = taskData.err_msg || taskData.errMsg || taskData.err_reason || taskData.errReason || '';
+                        
+                        let statusText = '';
+                        let statusClass = '';
+                        
+                        switch (status) {
+                            case 1:
+                                statusText = '等待中';
+                                statusClass = 'status-processing';
+                                break;
+                            case 2:
+                                statusText = '处理中';
+                                statusClass = 'status-processing';
+                                break;
+                            case 9:
+                                statusText = '已完成';
+                                statusClass = 'status-completed';
+                                break;
+                            case 10:
+                                statusText = '失败';
+                                statusClass = 'status-failed';
+                                break;
+                            default:
+                                statusText = '未知状态';
+                                statusClass = 'status-failed';
+                        }
+                        
+                        // 更新任务状态
+                        if (synthesisTasks.has(taskId)) {
+                            const task = synthesisTasks.get(taskId);
+                            task.status = statusText;
+                            task.statusClass = statusClass;
+                            task.audioUrl = audioUrl;
+                            task.duration = duration;
+                            task.subtitles = subtitles;
+                            task.error = errorMsg;
+                            if (typeof progress === 'number') task.progress = progress;
+                        }
+                        
+                        updateTaskList();
+                        
+                        if (status === 9 || status === 10 || attempts >= maxAttempts) {
+                            // 停止轮询
+                            return;
+                        }
+                        
+                        // 继续轮询
+                        attempts++;
+                        setTimeout(poll, 5000); // 5秒轮询一次
+                    } else {
+                        showMessage('synthesisResult', `查询失败: ${data.msg}`, 'error');
+                    }
+                } catch (error) {
+                    showMessage('synthesisResult', `查询失败: ${error.message}`, 'error');
+                }
+            };
+            
+            poll();
+        }
+
+        // 更新任务列表
+        function updateTaskList() {
+            const taskListEl = document.getElementById('taskList');
+            
+            if (synthesisTasks.size === 0) {
+                taskListEl.innerHTML = '<p style="text-align: center; color: #666;">暂无合成任务</p>';
+                return;
+            }
+
+            let taskListHTML = '';
+            
+            synthesisTasks.forEach((task, taskId) => {
+                taskListHTML += `
+                    <div class="task-item">
+                        <h5>任务ID: ${taskId}</h5>
+                        <p><strong>文本:</strong> ${task.text}</p>
+                        <p><strong>状态:</strong> <span class="status-badge ${task.statusClass}">${task.status}</span></p>
+                        ${task.duration ? `<p><strong>时长:</strong> ${task.duration}秒</p>` : ''}
+                        ${task.error ? `<p style="color: #dc3545;"><strong>错误:</strong> ${task.error}</p>` : ''}
+                        ${task.audioUrl ? `
+                            <div>
+                                <audio controls class="audio-player" src="${task.audioUrl}"></audio>
+                                <a href="${task.audioUrl}" download="synthesis_${taskId}.wav" class="btn" style="margin-top: 10px;">下载音频</a>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            });
+
+            taskListEl.innerHTML = taskListHTML;
+        }
+
+        // 工具函数：文件转Base64
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => {
+                    // 移除data URL前缀，只保留Base64数据
+                    const base64 = reader.result.split(',')[1];
+                    resolve(base64);
+                };
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        // 显示消息
+        function showMessage(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.className = type === 'error' ? 'error' : type === 'success' ? 'success' : '';
+            element.innerHTML = message;
+            element.classList.remove('hidden');
+        }
+
+        // 监听滑块变化
+        document.getElementById('speed').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = this.value;
+        });
+
+        document.getElementById('pitch').addEventListener('input', function() {
+            document.getElementById('pitchValue').textContent = this.value;
+        });
+
+        // 页面加载完成后自动获取Access Token
+        window.onload = function() {
+            
+            // 如果已有App ID和Secret Key，自动获取Token
+    getAccessToken();
+            
+            // 检查登录状态
+            checkLoginStatus();
+        };
+    </script>
+
+    <!-- 登录模态框 -->
+    <div id="loginModal" class="login-modal">
+        <div class="login-container">
+            <div class="login-header">
+                <h2>用户登录</h2>
+                <p>请先登录您的平台账号</p>
+            </div>
+            
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label for="username">用户名</label>
+                    <input type="text" id="username" name="username" required placeholder="请输入用户名">
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">密码</label>
+                    <input type="password" id="password" name="password" required placeholder="请输入密码">
+                </div>
+                
+                <div class="form-group">
+                    <label for="captcha">验证码</label>
+                    <div class="captcha-container">
+                        <input type="text" id="captcha" name="captcha" required placeholder="请输入验证码" class="captcha-input">
+                        <img id="captchaImage" src="" alt="验证码" class="captcha-image" onclick="getCaptcha()" title="点击刷新验证码">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="rememberMe" name="rememberMe"> 记住我
+                    </label>
+                </div>
+                
+                <button type="submit" class="btn" style="width: 100%;">登录</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 用户信息栏 -->
+    <div id="userInfo" class="user-info" style="display: none;">
+        <div class="user-avatar" id="userAvatar">U</div>
+        <span id="usernameDisplay">用户名</span>
+        <button class="logout-btn" onclick="logout()">退出</button>
+    </div>
+
+    <!-- 登录提示 -->
+    <div id="loginRequired" class="login-required" style="display: none;">
+        <h3>请先登录</h3>
+        <p>使用平台功能需要先登录您的账号</p>
+        <button class="btn" onclick="showLoginModal()">立即登录</button>
+    </div>
+</body>
+</html>

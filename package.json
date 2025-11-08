@@ -1,0 +1,19 @@
+{
+  "name": "chanjing-api-proxy",
+  "version": "1.0.0",
+  "description": "蝉镜API代理服务器 - 解决CORS问题",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "axios": "^1.6.0",
+    "multer": "^1.4.5-lts.1"
+  },
+  "keywords": ["proxy", "cors", "chanjing", "api"],
+  "author": "Your Name",
+  "license": "MIT"
+}
