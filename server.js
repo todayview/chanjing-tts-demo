@@ -138,7 +138,7 @@ async function proxyRequest(req, res, targetUrl) {
     if (error.response) {
       res.status(error.response.status).json(error.response.data);
     } else if (error.code === 'ENOTFOUND') {
-      res.status(503).json({ code: 50000, msg: '无法连接到蝉镜API服务器，请检查网络连接', error: error.message });
+      res.status(503).json({ code: 50000, msg: '无法连接到 服务器，请检查网络连接', error: error.message });
     } else if (error.code === 'ECONNABORTED') {
       res.status(504).json({ code: 50000, msg: '请求超时，请稍后重试', error: error.message });
     } else {
@@ -201,7 +201,7 @@ app.post('/proxy/audio_task_state', async (req, res) => {
 });
 
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString(), message: '蝉镜API代理服务器运行正常' });
+  res.json({ status: 'ok', timestamp: new Date().toISOString(), message: ' 代理服务器运行正常' });
 });
 
 app.get('/', (req, res) => {
@@ -209,7 +209,7 @@ app.get('/', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 蝉镜API代理服务器启动成功！`);
+  console.log(`🚀  代理服务器启动成功！`);
   console.log(`📡 服务器地址: http://localhost:${PORT}`);
   console.log(`🌐 API代理地址: http://localhost:${PORT}/proxy/*`);
   console.log(`🏥 健康检查: http://localhost:${PORT}/health`);

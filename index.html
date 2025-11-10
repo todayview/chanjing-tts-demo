@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>蝉镜API声音克隆测试</title>
+    <title>声音克隆Demo</title>
     <style>
         * {
             margin: 0;
@@ -452,7 +452,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>蝉镜API声音克隆测试</h1>
+            <h1> 声音克隆Demo</h1>
             <p>测试声音克隆和语音合成功能</p>
         </div>
 
@@ -507,11 +507,17 @@
         </div>
 
         <!-- 克隆声音列表 -->
-        <div class="section">
-            <h3 class="section-title">我的克隆声音</h3>
-            <button class="btn btn-secondary" onclick="getVoiceList()">刷新列表</button>
-            <div id="voiceList" class="voice-list"></div>
+    <div class="section">
+        <h3 class="section-title">我的克隆声音</h3>
+        <button class="btn btn-secondary" onclick="getVoiceList()">刷新列表</button>
+        <div id="voiceList" class="voice-list"></div>
+        <!-- 分页控件 -->
+        <div class="pagination-controls" style="display:flex;align-items:center;gap:10px;justify-content:center;margin-top:12px;">
+            <button class="btn btn-secondary" id="voicePrevBtn" onclick="prevVoicePage()">上一页</button>
+            <span id="voicePageInfo">第 1 页</span>
+            <button class="btn btn-secondary" id="voiceNextBtn" onclick="nextVoicePage()">下一页</button>
         </div>
+    </div>
 
         <!-- 语音合成 -->
         <div class="section">
@@ -551,6 +557,10 @@
 
     <script>
         let accessToken = '';
+        // 声音列表分页状态
+        let voiceCurrentPage = 1;
+        const voicePageSize = 6;
+        let voiceHasNextPage = false;
         let currentVoiceId = '';
         let voiceTasks = new Map();
         let synthesisTasks = new Map();
@@ -973,13 +983,17 @@
         }
 
         // 获取声音列表
-        async function getVoiceList() {
+        async function getVoiceList(page) {
             if (!accessToken) {
                 showMessage('voiceList', '请先获取Access Token', 'error');
                 return;
             }
 
             try {
+                // 更新当前页（如有传入）
+                if (typeof page === 'number' && page > 0) {
+                    voiceCurrentPage = page;
+                }
                 const response = await fetch('/proxy/list_customised_audio', {
                     method: 'POST',
                     headers: {
@@ -987,20 +1001,26 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        page: 1,
-                        page_size: 20
+                        page: voiceCurrentPage,
+                        page_size: voicePageSize
                     })
                 });
 
                 const data = await response.json();
                 
                 if (data.code === 0) {
-                    displayVoiceList(data.data.list);
+                    const list = (data.data && data.data.list) ? data.data.list : [];
+                    displayVoiceList(list);
+                    // 粗略判断是否还有下一页：当返回条数等于每页大小时认为可能有下一页
+                    voiceHasNextPage = Array.isArray(list) && list.length === voicePageSize;
+                    updateVoicePaginationControls();
                 } else {
                     showMessage('voiceList', `获取失败: ${data.msg}`, 'error');
+                    updateVoicePaginationControls();
                 }
             } catch (error) {
                 showMessage('voiceList', `请求失败: ${error.message}`, 'error');
+                updateVoicePaginationControls();
             }
         }
 
@@ -1067,7 +1087,7 @@
 
         // 选择声音
         function selectVoice(voiceId, voiceName) {
-            document.getElementById('selectedVoice').value = voiceName;
+            document.getElementById('selectedVoice').value = voiceId;
             
             // 更新UI显示
             document.querySelectorAll('.voice-card').forEach(card => {
@@ -1257,6 +1277,30 @@
             };
             
             poll();
+        }
+
+        // 更新分页控件状态
+        function updateVoicePaginationControls() {
+            const infoEl = document.getElementById('voicePageInfo');
+            const prevBtn = document.getElementById('voicePrevBtn');
+            const nextBtn = document.getElementById('voiceNextBtn');
+            if (infoEl) infoEl.textContent = `第 ${voiceCurrentPage} 页`;
+            if (prevBtn) prevBtn.disabled = voiceCurrentPage <= 1;
+            if (nextBtn) nextBtn.disabled = !voiceHasNextPage;
+        }
+
+        // 上一页
+        function prevVoicePage() {
+            if (voiceCurrentPage > 1) {
+                getVoiceList(voiceCurrentPage - 1);
+            }
+        }
+
+        // 下一页
+        function nextVoicePage() {
+            if (voiceHasNextPage) {
+                getVoiceList(voiceCurrentPage + 1);
+            }
         }
 
         // 更新任务列表
